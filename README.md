@@ -31,6 +31,7 @@ I2C: /dev/i2c-7
 - .NET 可通过 `System.Device.Spi`、`System.Device.I2c`、`System.Device.Gpio` 使用外设
 - ST7789 屏幕测试通过
 - ServoF030 风格 I2C 舵机控制测试通过
+- udev 规则 + 用户组方案可让 lckfb 用户无需 sudo 访问 GPIO/SPI/I2C，同时兼容 PipeWire 用户会话音频
 
 当前推荐启动 overlay 配置：
 
@@ -44,6 +45,7 @@ overlays=tspi-3m-spi1-m1-spidev.dtbo tspi-3m-i2c7-m1.dtbo
 |---|---|
 | `TaishanPi_3M_DotNet_SPI_Display_Onboarding.md` | SPI 显示屏完整上手文档 |
 | `TaishanPi_3M_DotNet_I2C_Servo_Onboarding.md` | I2C 舵机完整上手文档 |
+| `TaishanPi_3M_DotNet_NonRoot_Permissions_Guide.md` | 无 sudo 运行：udev 规则 + 用户组配置，兼容 PipeWire 音频 |
 | `TaishanPi_3M_40Pin_Pinout.md` | 根据引脚图整理的 40Pin Markdown 速查表 |
 | `RaspberryPi_40Pin_Pinout.md` | 根据树莓派引脚图整理的 BOARD / BCM / wiringPi 对照表 |
 | `v2_tspi-3m-spi1-m1-spidev.dts` | 已验证的 SPI1_M1 spidev overlay 源码 |
@@ -56,6 +58,7 @@ overlays=tspi-3m-spi1-m1-spidev.dtbo tspi-3m-i2c7-m1.dtbo
 
 - SPI 屏幕：[TaishanPi_3M_DotNet_SPI_Display_Onboarding.md](TaishanPi_3M_DotNet_SPI_Display_Onboarding.md)
 - I2C 舵机：[TaishanPi_3M_DotNet_I2C_Servo_Onboarding.md](TaishanPi_3M_DotNet_I2C_Servo_Onboarding.md)
+- 无 sudo 权限配置：[TaishanPi_3M_DotNet_NonRoot_Permissions_Guide.md](TaishanPi_3M_DotNet_NonRoot_Permissions_Guide.md)
 - 40Pin 引脚：[TaishanPi_3M_40Pin_Pinout.md](TaishanPi_3M_40Pin_Pinout.md)
 - 树莓派引脚：[RaspberryPi_40Pin_Pinout.md](RaspberryPi_40Pin_Pinout.md)
 
