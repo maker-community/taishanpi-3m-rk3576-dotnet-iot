@@ -6,6 +6,7 @@
 
 - SPI 显示屏：已验证 2.4 寸 ST7789 正常显示
 - I2C 舵机控制器：已验证物理 Pin 3 / Pin 5 上的 I2C7 可控制舵机运动
+- USB 音频：已验证 USB audio CODEC 播放、录音、`mpg123` 播放和音量上限保护
 
 ## 当前验证结论
 
@@ -32,6 +33,9 @@ I2C: /dev/i2c-7
 - ST7789 屏幕测试通过
 - ServoF030 风格 I2C 舵机控制测试通过
 - udev 规则 + 用户组方案可让 lckfb 用户无需 sudo 访问 GPIO/SPI/I2C，同时兼容 PipeWire 用户会话音频
+- USB audio CODEC 通过 PipeWire / ALSA 播放测试，`mpg123 1.31.2` 播放 MP3 测试通过
+- 已配置用户级音量上限守护服务，实测 60% / 70% / 80% / 90% 上限均可播放，最终保留 90% 上限
+- 录音测试建议将 USB Mic Capture 降至 60%，避免满幅削波；播放 WAV 优先用 `aplay -D default` 或 `aplay -D plughw:3,0`
 
 当前推荐启动 overlay 配置：
 
@@ -46,6 +50,7 @@ overlays=tspi-3m-spi1-m1-spidev.dtbo tspi-3m-i2c7-m1.dtbo
 | `TaishanPi_3M_DotNet_SPI_Display_Onboarding.md` | SPI 显示屏完整上手文档 |
 | `TaishanPi_3M_DotNet_I2C_Servo_Onboarding.md` | I2C 舵机完整上手文档 |
 | `TaishanPi_3M_DotNet_NonRoot_Permissions_Guide.md` | 无 sudo 运行：udev 规则 + 用户组配置，兼容 PipeWire 音频 |
+| `TaishanPi_3M_USB_Audio_mpg123_Test_Guide.md` | USB 音频、mpg123、录放音和音量上限保护实测文档 |
 | `TaishanPi_3M_40Pin_Pinout.md` | 根据引脚图整理的 40Pin Markdown 速查表 |
 | `RaspberryPi_40Pin_Pinout.md` | 根据树莓派引脚图整理的 BOARD / BCM / wiringPi 对照表 |
 | `v2_tspi-3m-spi1-m1-spidev.dts` | 已验证的 SPI1_M1 spidev overlay 源码 |
@@ -59,6 +64,7 @@ overlays=tspi-3m-spi1-m1-spidev.dtbo tspi-3m-i2c7-m1.dtbo
 - SPI 屏幕：[TaishanPi_3M_DotNet_SPI_Display_Onboarding.md](TaishanPi_3M_DotNet_SPI_Display_Onboarding.md)
 - I2C 舵机：[TaishanPi_3M_DotNet_I2C_Servo_Onboarding.md](TaishanPi_3M_DotNet_I2C_Servo_Onboarding.md)
 - 无 sudo 权限配置：[TaishanPi_3M_DotNet_NonRoot_Permissions_Guide.md](TaishanPi_3M_DotNet_NonRoot_Permissions_Guide.md)
+- USB 音频与 mpg123：[TaishanPi_3M_USB_Audio_mpg123_Test_Guide.md](TaishanPi_3M_USB_Audio_mpg123_Test_Guide.md)
 - 40Pin 引脚：[TaishanPi_3M_40Pin_Pinout.md](TaishanPi_3M_40Pin_Pinout.md)
 - 树莓派引脚：[RaspberryPi_40Pin_Pinout.md](RaspberryPi_40Pin_Pinout.md)
 
