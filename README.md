@@ -34,6 +34,7 @@ I2C: /dev/i2c-7
 - ServoF030 风格 I2C 舵机控制测试通过
 - udev 规则 + 用户组方案可让 lckfb 用户无需 sudo 访问 GPIO/SPI/I2C，同时兼容 PipeWire 用户会话音频
 - USB audio CODEC 通过 PipeWire / ALSA 播放测试，`mpg123 1.31.2` 播放 MP3 测试通过
+- PipeWire 默认播放与默认录音均已切到 USB audio CODEC，可用 `aplay -D default` / `arecord -D default` 走 USB 音频板
 - 已配置用户级音量上限守护服务，实测 60% / 70% / 80% / 90% 上限均可播放，最终保留 90% 上限
 - 录音测试建议将 USB Mic Capture 降至 60%，避免满幅削波；播放 WAV 优先用 `aplay -D default` 或 `aplay -D plughw:3,0`
 

@@ -26,6 +26,16 @@ PipeWire 默认输出节点为：
 PCM2912A Audio Codec Analog Stereo
 ```
 
+本次最终配置后，PipeWire 默认播放和默认录音都指向 USB 声卡：
+
+```text
+Default Audio/Sink:
+alsa_output.usb-Burr-Brown_from_TI_USB_audio_CODEC-00.analog-stereo
+
+Default Audio/Source:
+alsa_input.usb-Burr-Brown_from_TI_USB_audio_CODEC-00.mono-fallback
+```
+
 ## 2. 包源和 DNS 修复记录
 
 最初执行 `apt-get update` 时卡在多个源连接阶段：
@@ -138,6 +148,93 @@ Capture:
   Format: S16_LE
   Channels: 1
   Rates: 8000, 11025, 16000, 22050, 32000, 44100, 48000
+```
+
+### 4.1 设置 USB 声卡为默认播放和录音设备
+
+先查看当前 PipeWire 设备 ID：
+
+```bash
+wpctl status
+```
+
+本次实测中 USB 播放和录音节点显示为：
+
+```text
+Sinks:
+* 77. PCM2912A Audio Codec Analog Stereo
+
+Sources:
+* 78. PCM2912A Audio Codec Mono
+```
+
+注意：`77`、`78` 这类数字 ID 会在 PipeWire / WirePlumber 重启后变化，不要写死到脚本里。更持久的是下面的节点名：
+
+```text
+alsa_output.usb-Burr-Brown_from_TI_USB_audio_CODEC-00.analog-stereo
+alsa_input.usb-Burr-Brown_from_TI_USB_audio_CODEC-00.mono-fallback
+```
+
+临时或当前会话设置默认设备，可以使用当前 `wpctl status` 里看到的 ID：
+
+```bash
+wpctl set-default <USB_SINK_ID>
+wpctl set-default <USB_SOURCE_ID>
+```
+
+例如本次会话中：
+
+```bash
+wpctl set-default 77
+wpctl set-default 78
+```
+
+设置后用下面命令确认默认节点名已经写入：
+
+```bash
+wpctl status | sed -n '/Default Configured Node Names/,+6p'
+```
+
+期望看到：
+
+```text
+0. Audio/Sink    alsa_output.usb-Burr-Brown_from_TI_USB_audio_CODEC-00.analog-stereo
+1. Audio/Source  alsa_input.usb-Burr-Brown_from_TI_USB_audio_CODEC-00.mono-fallback
+```
+
+最终确认当前活动默认设备，星号应在 USB 声卡上：
+
+```bash
+wpctl status | sed -n '/Audio/,/Video/p'
+```
+
+期望类似：
+
+```text
+Sinks:
+* PCM2912A Audio Codec Analog Stereo
+
+Sources:
+* PCM2912A Audio Codec Mono
+```
+
+如果只看到 `Dummy Output`，说明 PipeWire / WirePlumber 刚重启后还没有完成 ALSA 设备枚举，可以稍等几秒再运行：
+
+```bash
+wpctl status
+```
+
+如果仍未恢复，可检查内核层 ALSA 设备和 WirePlumber 日志：
+
+```bash
+cat /proc/asound/cards
+journalctl --user -u wireplumber -u pipewire -u pipewire-pulse --no-pager -n 120
+```
+
+本次遇到过重启音频栈后短暂只显示 Dummy Output 的情况，随后设备重新枚举恢复。恢复后需要确认音量保护服务仍在运行：
+
+```bash
+systemctl --user is-active audio-volume-guard.service
 ```
 
 ## 5. 音量上限保护服务
@@ -278,6 +375,18 @@ Capture 25 [60%] [13.00dB] [on]
 arecord -D plughw:3,0 -f S16_LE -r 44100 -c 1 -d 20 /home/lckfb/recording_long.wav
 ```
 
+当 PipeWire 默认 Source 已经切到 USB 声卡后，也可以直接使用默认设备录音：
+
+```bash
+arecord -D default -f S16_LE -r 44100 -c 1 -d 5 /home/lckfb/default_usb_recording.wav
+```
+
+本次验证 `arecord -D default` 可成功录制，且默认 Source 已配置为：
+
+```text
+alsa_input.usb-Burr-Brown_from_TI_USB_audio_CODEC-00.mono-fallback
+```
+
 新录音统计：
 
 ```text
@@ -332,7 +441,18 @@ timeout 60 mpg123 -q /home/lckfb/test.mp3
 
 ```bash
 amixer -c CODEC set Mic Capture 60%
+arecord -D default -f S16_LE -r 44100 -c 1 -d 20 /home/lckfb/recording_long.wav
 arecord -D plughw:3,0 -f S16_LE -r 44100 -c 1 -d 20 /home/lckfb/recording_long.wav
+```
+
+设置并确认 USB 声卡默认输入/输出：
+
+```bash
+wpctl status
+wpctl set-default <USB_SINK_ID>
+wpctl set-default <USB_SOURCE_ID>
+wpctl status | sed -n '/Default Configured Node Names/,+6p'
+wpctl status | sed -n '/Audio/,/Video/p'
 ```
 
 检查 WAV 峰值：
@@ -368,4 +488,5 @@ amixer -c CODEC get Speaker
 - 录音时如果 `Maximum amplitude` 接近 `1.0` 或 `Minimum amplitude` 接近 `-1.0`，说明录音过满，建议降低 `Mic Capture`。
 - MP3 音源本身可能已经被压缩到接近满幅。测试高音量时建议阶梯式从 60%、70%、80%、90% 逐步上调。
 - `aplay -D default` 更适合日常测试；`aplay -D plughw:3,0` 适合指定 USB 声卡；`aplay -D hw:3,0` 只建议用于明确需要硬件直通的低风险测试。
+- 当前已将 PipeWire 默认播放和默认录音都切到 USB 声卡，因此使用 `aplay -D default` / `arecord -D default` 会走 USB 音频板。若重启或重新插拔 USB 声卡后异常，先用 `wpctl status` 确认星号是否仍在 `PCM2912A Audio Codec` 上。
 - 如果出现破音、USB 断连、板子发热、电源掉压或播放卡死，应立刻停止播放并降低音量上限。
